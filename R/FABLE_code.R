@@ -328,3 +328,10 @@ FABLE_postmean <- function(Y, gamma0 = 1, delta0sq = 1)
   return(CovPostMean)
   
 }
+
+#### STUFF TO DO:
+## 1. Write wrapper function for implementing FABLE.
+## 2. Write everything in RCpp + Armadillo: 
+## 2.1. SVD - either exact or approximate
+## 2.2. Bisection search would be faster.
+## 2.3. MCMC sampling
