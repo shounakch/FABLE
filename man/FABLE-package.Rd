@@ -17,9 +17,9 @@ The DESCRIPTION file:
 ~~ important functions ~~
 }
 \author{
-\packageAuthor{Shounak Chattopadhyay}
+\packageAuthor{FABLE}
 
-Maintainer: \packageMaintainer{anRpackage}
+Maintainer: \packageMaintainer{FABLE}
 }
 \references{
 ~~ Literature or other references for background information ~~
