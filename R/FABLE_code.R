@@ -186,7 +186,7 @@ cov_correct_matrix <- function(sigsq_hat, llprime_hat) {
 
 #Coverage-Corrected FABLE pseudo-posterior samples of the covariance matrix.
 #Time-optimized code.
-CCFABLESampler <- function(Y, gamma0, delta0sq, MC) {
+CCFABLESampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
   
   n = dim(Y)[1]
   p = dim(Y)[2]
@@ -207,7 +207,7 @@ CCFABLESampler <- function(Y, gamma0, delta0sq, MC) {
   }else
   {
     
-    D = diag(svdmod$d[1:kInd])
+    D = diag(svdmod$d[1:k])
     
   }
   
@@ -237,6 +237,8 @@ CCFABLESampler <- function(Y, gamma0, delta0sq, MC) {
   CovSampleStor = array(0, dim = c(MC, p, p))
   a_n = 1 / sqrt(n + (1 / tausq_est))
   
+  t1 = proc.time()
+  
   for(m in 1:MC) {
     
     ## Sample \sigma_j^2 \sim IG(\gamma_n / 2, \gamma_n \delta_j^2 / 2), j=1,\ldots,p. ##
@@ -253,7 +255,7 @@ CCFABLESampler <- function(Y, gamma0, delta0sq, MC) {
     SigmaHalfZG0t = SigmaHalfZ %*% t(G0)
     
     Part2Matrix = (a_n * (SigmaHalfZG0t + t(SigmaHalfZG0t))) + 
-      (a_n^2 * ((Z %*% t(Z)) * (sqrt(sigmaSqSample) %*% t(sqrt(sigmaSqSample)))))
+      (a_n^2 * ((ZSample %*% t(ZSample)) * (sqrt(sigmaSqSample) %*% t(sqrt(sigmaSqSample)))))
     
     LLtSample = G + (CCMatrix * Part2Matrix)
     
@@ -264,12 +266,14 @@ CCFABLESampler <- function(Y, gamma0, delta0sq, MC) {
     
   }
   
+  t2 = proc.time()
+  
   return(CovSampleStor)
   
 }
 
 #function to provide pseudo-posterior mean without carrying out any sampling.
-FABLE_postmean <- function(Y, gamma0, delta0sq)
+FABLE_postmean <- function(Y, gamma0 = 1, delta0sq = 1)
 {
   
   n = dim(Y)[1]
@@ -292,7 +296,7 @@ FABLE_postmean <- function(Y, gamma0, delta0sq)
   }else
   {
     
-    D = diag(svdmod$d[1:kInd])
+    D = diag(svdmod$d[1:k])
     
   }
   
