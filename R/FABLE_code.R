@@ -268,6 +268,7 @@ CCFABLESampler <- function(Y, gamma0, delta0sq, MC) {
   
 }
 
+#function to provide pseudo-posterior mean without carrying out any sampling.
 FABLE_postmean <- function(Y, gamma0, delta0sq)
 {
   
