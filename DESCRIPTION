@@ -1,0 +1,11 @@
+Package: FABLE
+Type: Package
+Title: Factor Analysis with BLEssing of dimensionality.
+Version: 1.0
+Date: 2024-02-22
+Author: Shounak Chattopadhyay
+Maintainer: Shounak Chattopadhyay <shounak.chattopadhyay@gmail.com>
+Description: Pseudo-posterior sampling of the covariance matrix using Bayesian latent factor models.
+License: What license is it under?
+Imports: Rcpp (>= 1.0.11)
+LinkingTo: Rcpp, RcppArmadillo
