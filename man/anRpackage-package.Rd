@@ -1,23 +1,23 @@
-\name{anRpackage-package}
-\alias{anRpackage-package}
-\alias{anRpackage}
+\name{FABLE-package}
+\alias{FABLE-package}
+\alias{FABLE}
 \docType{package}
 \title{
-\packageTitle{anRpackage}
+\packageTitle{FABLE}
 }
 \description{
-\packageDescription{anRpackage}
+\packageDescription{FABLE}
 }
 \details{
 
 The DESCRIPTION file:
-\packageDESCRIPTION{anRpackage}
-\packageIndices{anRpackage}
+\packageDESCRIPTION{FABLE}
+\packageIndices{FABLE}
 ~~ An overview of how to use the package, including the most ~~
 ~~ important functions ~~
 }
 \author{
-\packageAuthor{anRpackage}
+\packageAuthor{Shounak Chattopadhyay}
 
 Maintainer: \packageMaintainer{anRpackage}
 }
