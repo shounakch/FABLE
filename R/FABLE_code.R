@@ -454,7 +454,7 @@ FABLESampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
 
 ##Post-process FABLE draws to obtain entrywise pseudo-posterior
 ##mean, lower quantile, and upper quantiles of the covariance matrix. 
-CCFablePostProcessing <- function(FABLEOutput,
+CCFABLEPostProcessing <- function(FABLEOutput,
                                   CovCorrectMatrix,
                                   alpha = 0.05) {
   
