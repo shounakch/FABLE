@@ -1,7 +1,16 @@
+##Symmetrizes an upper triangular matrix.
+SymmetrizeMatrix <- function(A) {
+  
+  A1 = A + t(A)
+  diag(A1) = diag(A1) / 2
+  
+  return(A1)
+  
+}
+
+## Evaluates the likelihood function for y_{ij} ~ N(\eta_i' \lambda_j, \sigma_j^2).
 LogLikelihoodEvaluator <- function(Ymat, M, Lambda, SigmaSq)
 {
-  
-  ## Evaluates the likelihood function for y_{ij} ~ N(\eta_i' \lambda_j, \sigma_j^2).
   
   n = nrow(Ymat)
   
@@ -176,9 +185,9 @@ cov_correct_matrix <- function(sigsq_hat, llprime_hat) {
   den_matrix = (diag_llprime %*% t(sigsq_hat)) + (sigsq_hat %*% t(diag_llprime))
   
   B = num_matrix / den_matrix
-  diag(B) = diag(B) / 2
+  diag(B) = diag(B) / 2.0
   
-  B = sqrt(1 + B)
+  B = sqrt(1.0 + B)
   
   return(B)
   
@@ -186,7 +195,8 @@ cov_correct_matrix <- function(sigsq_hat, llprime_hat) {
 
 #Coverage-Corrected FABLE pseudo-posterior samples of the covariance matrix.
 #Time-optimized code.
-CCFABLESampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
+#Not space optimized - can be very bad choice for large p!
+CCFABLE_DirectSampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
   
   n = dim(Y)[1]
   p = dim(Y)[2]
@@ -330,8 +340,176 @@ FABLE_postmean <- function(Y, gamma0 = 1, delta0sq = 1)
 }
 
 #### STUFF TO DO:
-## 1. Write wrapper function for implementing FABLE.
+## 1. Write wrapper function for implementing FABLE. 
 ## 2. Write everything in RCpp + Armadillo: 
-## 2.1. SVD - either exact or approximate
-## 2.2. Bisection search would be faster.
-## 2.3. MCMC sampling
+## 2.1. SVD - either exact or approximate 
+## 2.2. Bisection search would be faster. (done)
+## 2.3. MCMC sampling (done)
+
+#### NEW STUFF TO DO (MARCH 5, 2024):
+
+### Having FABLE sampler is important for space constraint reasons.
+### Obtain \Lambda, \Sigma samples using regular FABLE.
+### Then correct for coverage.
+### Simple operations provide credible interval for \Psi_{uv}.
+
+##Vanilla FABLE sampler.
+##Useful for space constraint! Post-process to get CC-FABLE intervals.
+FABLESampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
+  
+  n = dim(Y)[1]
+  p = dim(Y)[2]
+  
+  svdmod = svd(Y)
+  
+  ####### CHOOSE k ##########
+  
+  k = RankEstimator(Y, svdmod)
+  U = svdmod$u[,1:k]
+  V = svdmod$v[,1:k]
+  
+  if(k == 1)
+  {
+    
+    D = as.matrix(svdmod$d[1])
+    
+  }else
+  {
+    
+    D = diag(svdmod$d[1:k])
+    
+  }
+  
+  ##### CHOOSE \tau^2 #####
+  
+  UDVt = U %*% D %*% t(V)
+  sigsq_hat_diag = colSums((Y-UDVt)^2) / n
+  tausq_est = mean( (colSums(UDVt^2) / n) / (k * sigsq_hat_diag))
+  
+  ##### Obtain the hyperparameters #####
+  
+  YtU = as.matrix(sweep(V, 2, svdmod$d[1:k], "*"))
+  G0 = (sqrt(n) / (n + (1/tausq_est))) * YtU
+  G = G0 %*% t(G0)
+  
+  CCMatrix = cov_correct_matrix(sigsq_hat_diag, G)
+  
+  gamma_n = gamma0 + n                              #\gamma_n = \gamma_0 + n
+  
+  gamma_n_deltasq = rep(gamma0*delta0sq, p) + 
+    as.numeric(apply(Y^2, 2, sum)) -
+    ((n / (n + (1 / tausq_est))) * as.numeric(apply((t(YtU))^2, 2, sum)))
+  
+  ##### Now proceed to store samples of \Psi = \Lambda \Lambda' + \Sigma #####
+  ##### WARNING: Massive RAM consumption for large n, p ... #####
+  
+  SigmaSampleStor = matrix(1, nrow = MC, ncol = p)
+  LambdaSampleStor = array(0, dim = c(MC, p, k))
+  
+  a_n = 1 / sqrt(n + (1 / tausq_est))
+  
+  #t1 = proc.time()
+  
+  for(m in 1:MC) {
+    
+    ## Sample \sigma_j^2 \sim IG(\gamma_n / 2, \gamma_n \delta_j^2 / 2), j=1,\ldots,p. ##
+    
+    sigmaSqSample = 1 / rgamma(n = p, shape = gamma_n / 2,
+                               rate = gamma_n_deltasq / 2)
+    
+    SigmaSampleStor[m,] = sigmaSqSample
+    
+    ## Sample \Lambda ##
+    
+    ZSample = matrix(rnorm(p*k), nrow = p, ncol = k)
+    LambdaSampleStor[m,,] = G0 + (a_n * sweep(ZSample, 1, sqrt(sigmaSqSample), "*"))
+    
+    ## Sample low-rank part L_C = \Lambda \Lambda' ##
+    
+    # ZSample = matrix(rnorm(p*k), nrow = p, ncol = k)
+    # SigmaHalfZ = sweep(ZSample, 1, sqrt(sigmaSqSample), "*")
+    # SigmaHalfZG0t = SigmaHalfZ %*% t(G0)
+    # 
+    # Part2Matrix = (a_n * (SigmaHalfZG0t + t(SigmaHalfZG0t))) + 
+    #   (a_n^2 * ((ZSample %*% t(ZSample)) * (sqrt(sigmaSqSample) %*% t(sqrt(sigmaSqSample)))))
+    # 
+    # LLtSample = G + (CCMatrix * Part2Matrix)
+    # 
+    # ## Store sample of \Psi ##
+    # 
+    # PsiSample = LLtSample + SigmaSample
+    # CovSampleStor[m,,] = PsiSample
+    
+  }
+  
+  #t2 = proc.time()
+  
+  output = list("LambdaSamples" = LambdaSampleStor,
+                "SigmaSqSamples" = SigmaSampleStor,
+                "G" = G)
+  
+  return(output)
+  
+}
+
+##Post-process FABLE draws to obtain entrywise pseudo-posterior
+##mean, lower quantile, and upper quantiles of the covariance matrix. 
+CCFablePostProcessing <- function(FABLEOutput,
+                                  CovCorrectMatrix,
+                                  alpha = 0.05) {
+  
+  LambdaSamples = FABLEOutput$LambdaSamples
+  SigmaSqSamples = FABLEOutput$SigmaSqSamples
+  G = FABLEOutput$G
+  
+  nMC = nrow(SigmaSqSamples)
+  p = ncol(SigmaSqSamples)
+  
+  CovMatPostMean = matrix(0, nrow = p, ncol = p)
+  CovMatLower = matrix(0, nrow = p, ncol = p)
+  CovMatUpper = matrix(0, nrow = p, ncol = p)
+  
+  ## Define the sample extractor function
+  
+  SampleExtractor <- function(m, ind1, ind2) {
+    
+    lowRankTerm = sum(LambdaSamples[m,ind1,] * LambdaSamples[m,ind2,])
+    return(as.numeric(lowRankTerm))
+    
+  }
+  
+  for(j1 in 1:p) {
+    
+    for(j2 in j1:p) {
+      
+      ## Extract the MC samples
+      
+      Lambj1Lambj2Samples = as.numeric(sapply(1:nMC, SampleExtractor, ind1 = j1, ind2 = j2))
+      Lambj1Lambj2SamplesCorrected = G[j1,j2] + 
+        (CovCorrectMatrix[j1,j2] * (Lambj1Lambj2Samples - G[j1,j2]))
+      
+      coefj1j2 = ifelse(j1 == j2, 1, 0)
+      
+      Covj1j2Samples = Lambj1Lambj2SamplesCorrected + (coefj1j2 * SigmaSqSamples[,j1])
+      
+      ## Extract mean, low, high.
+      
+      CovMatPostMean[j1,j2] = mean(Covj1j2Samples)
+      CovMatLower[j1,j2] = quantile(Covj1j2Samples, alpha/2)
+      CovMatUpper[j1,j2] = quantile(Covj1j2Samples, 1 - (alpha/2))
+      
+    }
+    
+  }
+  
+  CovMatPostMean = SymmetrizeMatrix(CovMatPostMean)
+  CovMatLower = SymmetrizeMatrix(CovMatLower)
+  CovMatUpper = SymmetrizeMatrix(CovMatUpper)
+  
+  output = list("PostMeanMatrix" = CovMatPostMean,
+                "LowerQuantileMatrix" = CovMatLower,
+                "UpperQuantileMatrix" = CovMatUpper)
+  
+  return(output)
+  
+}
