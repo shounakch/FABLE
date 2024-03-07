@@ -29,7 +29,7 @@ LogLikelihoodEvaluator <- function(Ymat, M, Lambda, SigmaSq)
 
 # incorporated bisection search in new RankEstimator function
 # keep testing this function
-RankEstimator <- function(Ymat, svdmod) {
+RankEstimator <- function(Ymat, svdmod, kMax) {
   
   #### Use the idea in `Determining the number of factors in high-dimensional generalized latent factor models` (Chen & Li, 2022)
   #### kMaxProportion is the proportion of variation explained (using singular values).
@@ -46,7 +46,7 @@ RankEstimator <- function(Ymat, svdmod) {
   #svdY = svd(Ymat)
   svdY = svdmod
   svalsY = svdY$d
-  kMax = min(which(cumsum(svalsY) / sum(svalsY) >= 0.95)) #upper bound on latent factor dimension
+  #kMax = min(which(cumsum(svalsY) / sum(svalsY) >= 0.95)) #upper bound on latent factor dimension
   U_Y = svdY$u
   V_Y = svdY$v
   
@@ -91,7 +91,8 @@ RankEstimator <- function(Ymat, svdmod) {
     
     # Estimate factor loadings \Lambda
     
-    LambdaEst = (sqrt(nwhole) / (nwhole + tausq_est)) * (t(Ymat) %*% U_K)
+    YtU = as.matrix(sweep(V_K, 2, svalsY[1:kInd], "*"))
+    LambdaEst = (sqrt(nwhole) / (nwhole + tausq_est)) * (YtU)
     
     #t4 = proc.time()
     
@@ -106,10 +107,10 @@ RankEstimator <- function(Ymat, svdmod) {
     #t5 = proc.time()
     
     # Store this value
+    # Loglikelihood value is already scaled by n*p
     
     CriterionStor = (-2 * LogLikDataSet) + 
-      (kInd * max(nwhole, pwhole) * log(min(nwhole, pwhole)) / 
-         (nwhole * pwhole))
+      (kInd * max(nwhole, pwhole) * log(min(nwhole, pwhole)) / (nwhole * pwhole)) 
     
     return(as.numeric(CriterionStor))
     
@@ -121,12 +122,17 @@ RankEstimator <- function(Ymat, svdmod) {
       
       midpoint = as.integer(0.5 * (lower + upper))
       
+      #print(midpoint)
+      
+      # print(c(lower, midpoint, upper))
+      
       CriterionLower = CriterionFunction(lower)
-      CriterionUpper = CriterionFunction(upper)
+      # CriterionUpper = CriterionFunction(upper)
       CriterionMidPoint = CriterionFunction(midpoint)
       
       if(CriterionLower < CriterionMidPoint) {
         
+        #print(BisectionRecursion(lower, midpoint))
         return(BisectionRecursion(lower, midpoint))
         
       }else {
@@ -134,12 +140,16 @@ RankEstimator <- function(Ymat, svdmod) {
         ThreeFourthPoint = as.integer(0.5 * (midpoint + upper))
         CriterionThreeFourth = CriterionFunction(ThreeFourthPoint)
         
+        #print(ThreeFourthPoint)
+        
         if(CriterionMidPoint <= CriterionThreeFourth) {
           
+          #print(BisectionRecursion(lower, midpoint))
           return(BisectionRecursion(lower, midpoint))
           
         }else {
           
+          #print(BisectionRecursion(midpoint, upper))
           return(BisectionRecursion(midpoint, upper))
           
         }
@@ -155,6 +165,7 @@ RankEstimator <- function(Ymat, svdmod) {
   }
   
   BisectionInterval = BisectionRecursion(1, kMax)
+  #print(BisectionInterval)
   
   kEvalSeq = seq(BisectionInterval[1], BisectionInterval[2], by = 1)
   CriterionValues = rep(0, length(kEvalSeq))
@@ -193,9 +204,10 @@ cov_correct_matrix <- function(sigsq_hat, llprime_hat) {
   
 }
 
-#Coverage-Corrected FABLE pseudo-posterior samples of the covariance matrix.
-#Time-optimized code.
-#Not space optimized - can be very bad choice for large p!
+##Coverage-Corrected FABLE pseudo-posterior samples of the covariance matrix.
+##Time-optimized code.
+##Not space optimized - can be very bad choice for large p!
+##Check out FABLE and PostProcessing functions below, more efficient.
 CCFABLE_DirectSampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
   
   n = dim(Y)[1]
@@ -205,7 +217,9 @@ CCFABLE_DirectSampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
   
   ####### CHOOSE k ##########
   
-  k = RankEstimator(Y, svdmod)
+  kMax = min(which(cumsum(svdmod$d) / sum(svdmod$d) >= 0.95))
+  
+  k = RankEstimator(Y, svdmod, kMax)
   U = svdmod$u[,1:k]
   V = svdmod$v[,1:k]
   
@@ -355,6 +369,7 @@ FABLE_postmean <- function(Y, gamma0 = 1, delta0sq = 1)
 
 ##Vanilla FABLE sampler.
 ##Useful for space constraint! Post-process to get CC-FABLE intervals.
+##Write RCpp code equivalent.
 FABLESampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
   
   n = dim(Y)[1]
@@ -453,7 +468,8 @@ FABLESampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
 }
 
 ##Post-process FABLE draws to obtain entrywise pseudo-posterior
-##mean, lower quantile, and upper quantiles of the covariance matrix. 
+##mean, lower quantile, and upper quantiles of the covariance matrix.
+##RCpp code equivalent will probably be much faster.
 CCFABLEPostProcessing <- function(FABLEOutput,
                                   CovCorrectMatrix,
                                   alpha = 0.05) {
