@@ -356,8 +356,8 @@ arma::mat CPPcov_correct_matrix(arma::vec sigsq_hat,
   
 }
 
-// [[Rcpp::export]]
 //Requires input of SVD.
+// [[Rcpp::export]]
 arma::mat CPPFABLEPostMean(arma::mat Y, 
                            double gamma0, 
                            double delta0sq,
@@ -510,13 +510,12 @@ Rcpp::List CPPFABLESampler(arma::mat Y,
     
     // Sample \Lambda
     
-    arma::mat ZSample(p, k, fill::zeros);
+    arma::mat ZSample(p, k, fill::randn);
     arma::mat LambdaSample(p, k, fill::zeros);
-    ZSample = randn(p, k);
     ZSample.each_col() %= sqrt(sigmaSqSample);
     
     LambdaSample = G0 + (a_n * ZSample);
-    LambdaSampleStor.row(m) = vectorise(LambdaSample).t();
+    LambdaSampleStor.row(m) = vectorise(LambdaSample.t()).t();
     
   }
   
@@ -547,13 +546,7 @@ Rcpp::List CPPCCFABLEPostProcessing(Rcpp::List FABLEOutput,
   
   // Define the sample extractor function
   
-  arma::mat Lambdaj1Samples(nMC, k, fill::zeros);
-  arma::mat Lambdaj2Samples(nMC, k, fill::zeros);
-  arma::vec Lj1j2Samples(nMC, fill::zeros);
-  arma::vec Lj1j2SamplesCorrected(nMC, fill::zeros);
   arma::vec oneVec(nMC, fill::ones);
-  arma::vec Gj1j2Vec(nMC, fill::ones);
-  arma::vec Covj1j2Samples(nMC, fill::zeros);
   
   for(int j1 = 0; j1 < p; ++j1) {
     
@@ -563,30 +556,47 @@ Rcpp::List CPPCCFABLEPostProcessing(Rcpp::List FABLEOutput,
       
     }
     
+    arma::mat Lambdaj1Samples(nMC, k, fill::zeros);
+    
     Lambdaj1Samples = LambdaSamples.cols(j1*k, (j1*k)+k-1);
     
     for(int j2 = j1; j2 < p; ++j2) {
+      
+      arma::mat Lambdaj2Samples(nMC, k, fill::zeros);
       
       Lambdaj2Samples = LambdaSamples.cols(j2*k, (j2*k)+k-1);
       
       // Extract samples for L[j1,k2], L = \Lambda \Lambda'.
       
+      arma::vec Lj1j2Samples(nMC, fill::zeros);
+      
       Lj1j2Samples = sum(Lambdaj1Samples % Lambdaj2Samples, 1);
+      
+      arma::vec Gj1j2Vec(nMC, fill::ones);
       
       Gj1j2Vec = G(j1,j2) * oneVec;
       
-      Lj1j2SamplesCorrected = Gj1j2Vec + (CovCorrectMatrix(j1,j2) * (Lj1j2Samples - Gj1j2Vec));
-      Covj1j2Samples = Lj1j2SamplesCorrected;
+      // Rcpp::Rcout << G(j1,j2) << std::endl;
       
-      if(j1 == j2) {
+      arma::vec Lj1j2SamplesCorrected(nMC, fill::zeros);
+      
+      Lj1j2SamplesCorrected = Gj1j2Vec + (CovCorrectMatrix(j1,j2) * (Lj1j2Samples - Gj1j2Vec));
+      
+      arma::vec Covj1j2Samples(nMC, fill::zeros);
+      
+      if(j2 == j1) {
         
-        Covj1j2Samples = Covj1j2Samples + SigmaSqSamples.col(j1);
+        Covj1j2Samples = Lj1j2SamplesCorrected + SigmaSqSamples.col(j1);
+        
+      }else {
+        
+        Covj1j2Samples = Lj1j2SamplesCorrected;
         
       }
       
       // Extract summary statistics for Cov[j1,j2]
       
-      CovMatPostMean(j1,j2) = mean(Covj1j2Samples);
+      CovMatPostMean(j1,j2) = accu(Covj1j2Samples) / nMC;
       arma::vec LowerQuantile = {alpha / 2.0};
       arma::vec UpperQuantile = {1 - (alpha / 2.0)};
       
@@ -615,9 +625,9 @@ Rcpp::List CPPCCFABLEPostProcessing(Rcpp::List FABLEOutput,
 
 // [[Rcpp::export]]
 Rcpp::List CCFABLEPostProcessingSubmatrix(Rcpp::List FABLEOutput,
-                                    arma::mat CovCorrectMatrix,
-                                    double alpha,
-                                    arma::ivec SelectedIndices) {
+                                          arma::mat CovCorrectMatrix,
+                                          double alpha,
+                                          arma::ivec SelectedIndices) {
   
   SelectedIndices = SelectedIndices - 1;
   
@@ -636,13 +646,12 @@ Rcpp::List CCFABLEPostProcessingSubmatrix(Rcpp::List FABLEOutput,
   
   // Define the sample extractor function
   
-  arma::mat Lambdaj1Samples(nMC, k, fill::zeros);
-  arma::mat Lambdaj2Samples(nMC, k, fill::zeros);
-  arma::vec Lj1j2Samples(nMC, fill::zeros);
-  arma::vec Lj1j2SamplesCorrected(nMC, fill::zeros);
+  
+  
+  
   arma::vec oneVec(nMC, fill::ones);
-  arma::vec Gj1j2Vec(nMC, fill::ones);
-  arma::vec Covj1j2Samples(nMC, fill::zeros);
+  
+  
   
   for(int j1 = 0; j1 < SubLength; ++j1) {
     
@@ -653,33 +662,48 @@ Rcpp::List CCFABLEPostProcessingSubmatrix(Rcpp::List FABLEOutput,
     }
     
     int FirstIndex = SelectedIndices(j1);
+    arma::mat Lambdaj1Samples(nMC, k, fill::zeros);
+    
     Lambdaj1Samples = LambdaSamples.cols(FirstIndex*k, (FirstIndex*k)+k-1);
     
     for(int j2 = j1; j2 < SubLength; ++j2) {
       
-     int SecondIndex = SelectedIndices(j2);
+      int SecondIndex = SelectedIndices(j2);
+      arma::mat Lambdaj2Samples(nMC, k, fill::zeros);
+      
       Lambdaj2Samples = LambdaSamples.cols(SecondIndex*k, (SecondIndex*k)+k-1);
       
       // Extract samples for L[j1,k2], L = \Lambda \Lambda'.
+      
+      arma::vec Lj1j2Samples(nMC, fill::zeros);
       
       Lj1j2Samples = sum(Lambdaj1Samples % Lambdaj2Samples, 1);
       
       // Correct the samples for coverage
       
+      arma::vec Gj1j2Vec(nMC, fill::ones);
+      
       Gj1j2Vec = G(FirstIndex,SecondIndex) * oneVec;
       
+      arma::vec Lj1j2SamplesCorrected(nMC, fill::zeros);
+      
       Lj1j2SamplesCorrected = Gj1j2Vec + (CovCorrectMatrix(FirstIndex,SecondIndex) * (Lj1j2Samples - Gj1j2Vec));
-      Covj1j2Samples = Lj1j2SamplesCorrected;
+      
+      arma::vec Covj1j2Samples(nMC, fill::zeros);
       
       if(FirstIndex == SecondIndex) {
         
-        Covj1j2Samples = Covj1j2Samples + SigmaSqSamples.col(FirstIndex);
+        Covj1j2Samples = Lj1j2SamplesCorrected + SigmaSqSamples.col(FirstIndex);
+        
+      }else {
+        
+        Covj1j2Samples = Lj1j2SamplesCorrected;
         
       }
       
       // Store summaries
       
-      CovMatPostMean(j1,j2) = mean(Covj1j2Samples);
+      CovMatPostMean(j1,j2) = accu(Covj1j2Samples) / nMC;
       arma::vec LowerQuantile = {alpha / 2.0};
       arma::vec UpperQuantile = {1 - (alpha / 2.0)};
       
