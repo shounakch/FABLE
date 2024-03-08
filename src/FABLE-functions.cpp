@@ -623,13 +623,14 @@ Rcpp::List CPPCCFABLEPostProcessing(Rcpp::List FABLEOutput,
   
 }
 
+//Need to check this function carefully.
 // [[Rcpp::export]]
 Rcpp::List CCFABLEPostProcessingSubmatrix(Rcpp::List FABLEOutput,
                                           arma::mat CovCorrectMatrix,
                                           double alpha,
-                                          arma::ivec SelectedIndices) {
+                                          arma::uvec SelectedIndices) {
   
-  SelectedIndices = SelectedIndices - 1;
+  SelectedIndices = SelectedIndices - 1; //Somehow need to account for different index starts in C++ and R.
   
   arma::mat LambdaSamples = FABLEOutput["LambdaSamples"];
   arma::mat SigmaSqSamples = FABLEOutput["SigmaSqSamples"];
@@ -646,12 +647,7 @@ Rcpp::List CCFABLEPostProcessingSubmatrix(Rcpp::List FABLEOutput,
   
   // Define the sample extractor function
   
-  
-  
-  
   arma::vec oneVec(nMC, fill::ones);
-  
-  
   
   for(int j1 = 0; j1 < SubLength; ++j1) {
     
