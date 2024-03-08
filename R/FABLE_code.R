@@ -297,17 +297,18 @@ CCFABLE_DirectSampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
 }
 
 #function to provide pseudo-posterior mean without carrying out any sampling.
-FABLE_postmean <- function(Y, gamma0 = 1, delta0sq = 1)
-{
+FABLEPostmean <- function(Y, gamma0 = 1, delta0sq = 1, kMax) {
   
   n = dim(Y)[1]
   p = dim(Y)[2]
   
   svdmod = svd(Y)
   
+  # t1 = proc.time()
+  
   ####### CHOOSE k ##########
   
-  k = RankEstimator(Y, svdmod)
+  k = RankEstimator(Y, svdmod, kMax)
   
   U = svdmod$u[,1:k]
   V = svdmod$v[,1:k]
@@ -336,7 +337,7 @@ FABLE_postmean <- function(Y, gamma0 = 1, delta0sq = 1)
   G0 = (sqrt(n) / (n + (1/tausq_est))) * YtU
   G = G0 %*% t(G0)
   
-  CCMatrix = cov_correct_matrix(sigsq_hat_diag, G)
+  # CCMatrix = cov_correct_matrix(sigsq_hat_diag, G)
   
   gamma_n = gamma0 + n                              #\gamma_n = \gamma_0 + n
   
@@ -348,6 +349,8 @@ FABLE_postmean <- function(Y, gamma0 = 1, delta0sq = 1)
   SigmaEstimate = diag(gamma_n_deltasq / (gamma_n - 2))
   
   CovPostMean = LLtEstimate + SigmaEstimate
+  
+  # t2 = proc.time()
   
   return(CovPostMean)
   
@@ -370,7 +373,7 @@ FABLE_postmean <- function(Y, gamma0 = 1, delta0sq = 1)
 ##Vanilla FABLE sampler.
 ##Useful for space constraint! Post-process to get CC-FABLE intervals.
 ##Write RCpp code equivalent.
-FABLESampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
+FABLESampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000, kMax) {
   
   n = dim(Y)[1]
   p = dim(Y)[2]
@@ -379,7 +382,7 @@ FABLESampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
   
   ####### CHOOSE k ##########
   
-  k = RankEstimator(Y, svdmod)
+  k = RankEstimator(Y, svdmod, kMax)
   U = svdmod$u[,1:k]
   V = svdmod$v[,1:k]
   
@@ -461,7 +464,8 @@ FABLESampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
   
   output = list("LambdaSamples" = LambdaSampleStor,
                 "SigmaSqSamples" = SigmaSampleStor,
-                "G" = G)
+                "G" = G,
+                "SigSqEstimate" = gamma_n_deltasq / (gamma_n - 2))
   
   return(output)
   
@@ -469,7 +473,7 @@ FABLESampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
 
 ##Post-process FABLE draws to obtain entrywise pseudo-posterior
 ##mean, lower quantile, and upper quantiles of the covariance matrix.
-##RCpp code equivalent will probably be much faster.
+##RCpp code equivalent will probably be much faster. (YES!)
 CCFABLEPostProcessing <- function(FABLEOutput,
                                   CovCorrectMatrix,
                                   alpha = 0.05) {
@@ -487,34 +491,68 @@ CCFABLEPostProcessing <- function(FABLEOutput,
   
   ## Define the sample extractor function
   
-  SampleExtractor <- function(m, ind1, ind2) {
-    
-    lowRankTerm = sum(LambdaSamples[m,ind1,] * LambdaSamples[m,ind2,])
-    return(as.numeric(lowRankTerm))
-    
-  }
+  # SampleExtractor <- function(m, ind1, ind2) {
+  #   
+  #   lowRankTerm = sum(LambdaSamples[m,ind1,] * LambdaSamples[m,ind2,])
+  #   return(as.numeric(lowRankTerm))
+  #   
+  # }
   
   for(j1 in 1:p) {
+    
+    t1 = proc.time()
     
     for(j2 in j1:p) {
       
       ## Extract the MC samples
       
-      Lambj1Lambj2Samples = as.numeric(sapply(1:nMC, SampleExtractor, ind1 = j1, ind2 = j2))
-      Lambj1Lambj2SamplesCorrected = G[j1,j2] + 
-        (CovCorrectMatrix[j1,j2] * (Lambj1Lambj2Samples - G[j1,j2]))
+      #t1 = proc.time()
+      
+      Lambj1Samples = t(LambdaSamples[,j1,])
+      Lambj2Samples = t(LambdaSamples[,j2,])
+      
+      #t2 = proc.time()
+      
+      Lambj1Lambj2Samples = as.numeric(apply(Lambj1Samples * Lambj2Samples, 2, sum))
+      
+      #t3 = proc.time()
+      
+      Lambj1Lambj2SamplesCorrected = rep(G[j1,j2], nMC) + 
+        (CovCorrectMatrix[j1,j2] * (Lambj1Lambj2Samples - rep(G[j1,j2], nMC)))
+      
+      #t4 = proc.time()
       
       coefj1j2 = ifelse(j1 == j2, 1, 0)
       
       Covj1j2Samples = Lambj1Lambj2SamplesCorrected + (coefj1j2 * SigmaSqSamples[,j1])
       
+      #t5 = proc.time()
+      
       ## Extract mean, low, high.
       
-      CovMatPostMean[j1,j2] = mean(Covj1j2Samples)
-      CovMatLower[j1,j2] = quantile(Covj1j2Samples, alpha/2)
-      CovMatUpper[j1,j2] = quantile(Covj1j2Samples, 1 - (alpha/2))
+      # CovMatPostMean[j1,j2] = sum(Covj1j2Samples) / nMC
+      # 
+      # t51 = proc.time()
+      # 
+      # CovMatPostMean[j1,j2] = mean(Covj1j2Samples)
+      # 
+      # t511 = proc.time()
+      # 
+      # #print(c((t511 - t51)[3], (t51-t5)[3]))
+      # 
+      # CovMatLower[j1,j2] = quantile(Covj1j2Samples, alpha/2)
+      # 
+      # t52 = proc.time()
+      # 
+      # CovMatUpper[j1,j2] = quantile(Covj1j2Samples, 1 - (alpha/2))
+      # 
+      # t6 = proc.time()
       
     }
+    
+    t2 = proc.time()
+    
+    print(j1)
     
   }
   
