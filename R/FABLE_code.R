@@ -327,7 +327,7 @@ FABLEPostmean <- function(Y, gamma0 = 1, delta0sq = 1, kMax) {
   
   ##### CHOOSE \tau^2 #####
   
-  UDVt = U %*% D %*% t(V)
+  UDVt = U %*% D %*% t(V) #consider using tcrossprod to make faster
   sigsq_hat_diag = colSums((Y-UDVt)^2) / n
   tausq_est = mean( (colSums(UDVt^2) / n) / (k * sigsq_hat_diag))
   
@@ -335,7 +335,8 @@ FABLEPostmean <- function(Y, gamma0 = 1, delta0sq = 1, kMax) {
   
   YtU = as.matrix(sweep(V, 2, svdmod$d[1:k], "*"))
   G0 = (sqrt(n) / (n + (1/tausq_est))) * YtU
-  G = G0 %*% t(G0)
+  #G = G0 %*% t(G0)
+  G = Matrix::tcrossprod(G0)
   
   # CCMatrix = cov_correct_matrix(sigsq_hat_diag, G)
   
