@@ -1,12 +1,10 @@
 #include <math.h>
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
-#include <Rcpp/Benchmark/Timer.h> //will remove in final version
 
-// [[Rcpp::depends(RcppClock)]]
 // [[Rcpp::depends(RcppArmadillo)]]
 ////[[Rcpp::plugins("cpp11")]]
-//// [[Rcpp::plugins(openmp)]]
+// [[Rcpp::plugins(openmp)]]
 
 using namespace arma;
 
@@ -331,6 +329,64 @@ int CPPRankEstimator(arma::mat Y,
 }
 
 // [[Rcpp::export]]
+Rcpp::List FABLEHyperParameters(arma::mat Y,
+                                arma::mat U_Y,
+                                arma::mat V_Y,
+                                arma::vec svalsY,
+                                int kEst) {
+  
+  int n = Y.n_rows;
+  int p = Y.n_cols;
+  
+  // svdmod = svd(Y)
+  
+  // CHOOSE k 
+  
+  int k = kEst;
+  // k = CPPRankEstimator(Y, U_Y, V_Y, svalsY, kMax);
+  
+  arma::mat U_K(n, k, fill::zeros);
+  arma::mat V_K(p, k, fill::zeros);
+  arma::mat D_K(k, k, fill::zeros);
+  
+  U_K = U_Y.cols(0, k-1);
+  V_K = V_Y.cols(0, k-1);
+  
+  D_K = diagmat(svalsY.subvec(0, k-1));
+  
+  // Estimate \tau^2 and \sigma_j^2
+  
+  arma::mat UDVt(n, p, fill::zeros);
+  
+  UDVt = U_K * D_K * V_K.t();
+  
+  arma::vec sigsq_hat_diag(p, fill::zeros);
+  sigsq_hat_diag = (sum(square(Y - UDVt), 0)).t() / n; //problematic statement
+  
+  double tausq_est = 1.0;
+  
+  tausq_est = (mean(sum(square(UDVt), 0).t() / sigsq_hat_diag)) / (n * k);
+  
+  // Obtain the hyperparameters
+  
+  arma::mat YtU(p, k, fill::zeros);
+  YtU = V_K;
+  YtU.each_row() %= svalsY.subvec(0, k-1).t();
+  
+  arma::mat G0(p, k, fill::zeros);
+  arma::mat G(p, p, fill::zeros);
+  
+  G0 = (sqrt(n) / (n + (1/tausq_est))) * YtU;
+  G = G0 * G0.t();
+  
+  return Rcpp::List::create(Rcpp::Named("SigmaSqEstimate") = sigsq_hat_diag,
+                            Rcpp::Named("G") = G,
+                            Rcpp::Named("EstimatedRank") = k,
+                            Rcpp::Named("G0") = G0);
+  
+}
+
+// [[Rcpp::export]]
 arma::mat CPPcov_correct_matrix(arma::vec sigsq_hat, 
                                 arma::mat llprime_hat) {
   
@@ -444,7 +500,8 @@ Rcpp::List CPPFABLESampler(arma::mat Y,
                            arma::mat U_Y,
                            arma::mat V_Y,
                            arma::vec svalsY,
-                           int kMax) {
+                           int kEst,
+                           double varInflation) {
   
   int n = Y.n_rows;
   int p = Y.n_cols;
@@ -453,8 +510,8 @@ Rcpp::List CPPFABLESampler(arma::mat Y,
   
   // CHOOSE k 
   
-  int k = 1;
-  k = CPPRankEstimator(Y, U_Y, V_Y, svalsY, kMax);
+  int k = kEst;
+  // k = CPPRankEstimator(Y, U_Y, V_Y, svalsY, kMax);
   
   arma::mat U_K(n, k, fill::zeros);
   arma::mat V_K(p, k, fill::zeros);
@@ -492,8 +549,8 @@ Rcpp::List CPPFABLESampler(arma::mat Y,
   
   arma::vec covCorrectEntries = CPPcov_correct_matrix(sigsq_hat_diag, G);
   
-  double varInflation = 1.0;
-  varInflation = median(covCorrectEntries);
+  //double varInflation = covCorrectEntries.max();
+  // double varInflation = median(covCorrectEntries);
   
   double gamma_n = gamma0 + n;    // \gamma_n = \gamma_0 + n
   
@@ -531,19 +588,19 @@ Rcpp::List CPPFABLESampler(arma::mat Y,
   return Rcpp::List::create(Rcpp::Named("LambdaSamples") = LambdaSampleStor,
                             Rcpp::Named("SigmaSqSamples") = SigmaSampleStor,
                             Rcpp::Named("G") = G,
-                            Rcpp::Named("SigmaSqEstimate") = gamma_n_deltasq / (gamma_n - 2),
-                            Rcpp::Named("EstimatedRank") = k);
+                            // Rcpp::Named("SigmaSqEstimate") = gamma_n_deltasq / (gamma_n - 2),
+                            Rcpp::Named("SigmaSqEstimate") = sigsq_hat_diag,
+                            Rcpp::Named("EstimatedRank") = k,
+                            Rcpp::Named("VarianceInflation") = varInflation);
   
 }
 
 // [[Rcpp::export]]
 Rcpp::List CPPCCFABLEPostProcessing(Rcpp::List FABLEOutput,
-                                    arma::mat CovCorrectMatrix,
                                     double alpha) {
   
   arma::mat LambdaSamples = FABLEOutput["LambdaSamples"];
   arma::mat SigmaSqSamples = FABLEOutput["SigmaSqSamples"];
-  arma::mat G = FABLEOutput["G"];
   
   int nMC = SigmaSqSamples.n_rows;
   int p = SigmaSqSamples.n_cols;
@@ -560,9 +617,9 @@ Rcpp::List CPPCCFABLEPostProcessing(Rcpp::List FABLEOutput,
   for(int j1 = 0; j1 < p; ++j1) {
     
     if(j1 % 100 == 0) {
-
+      
       Rcpp::Rcout << "j1: " << j1 << std::endl;
-
+      
     }
     
     arma::mat Lambdaj1Samples(nMC, k, fill::zeros);
@@ -625,7 +682,6 @@ Rcpp::List CPPCCFABLEPostProcessing(Rcpp::List FABLEOutput,
 //Need to check this function carefully.
 // [[Rcpp::export]]
 Rcpp::List CCFABLEPostProcessingSubmatrix(Rcpp::List FABLEOutput,
-                                          arma::mat CovCorrectMatrix,
                                           double alpha,
                                           arma::uvec SelectedIndices) {
   
