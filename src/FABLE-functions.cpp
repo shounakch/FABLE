@@ -1,12 +1,10 @@
 #include <math.h>
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
-#include <Rcpp/Benchmark/Timer.h> //will remove in final version
 
-// [[Rcpp::depends(RcppClock)]]
 // [[Rcpp::depends(RcppArmadillo)]]
 ////[[Rcpp::plugins("cpp11")]]
-//// [[Rcpp::plugins(openmp)]]
+// [[Rcpp::plugins(openmp)]]
 
 using namespace arma;
 
