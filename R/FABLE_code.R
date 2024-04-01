@@ -246,7 +246,7 @@ CCFABLE_DirectSampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
   
   YtU = as.matrix(sweep(V, 2, svdmod$d[1:k], "*"))
   G0 = (sqrt(n) / (n + (1/tausq_est))) * YtU
-  G = G0 %*% t(G0)
+  G = Matrix::tcrossprod(G0)
   
   CCMatrix = cov_correct_matrix(sigsq_hat_diag, G)
   
@@ -330,15 +330,17 @@ FABLEPostmean <- function(Y, gamma0 = 1, delta0sq = 1) {
   
   ##### CHOOSE \tau^2 #####
   
-  UDVt = U %*% D %*% t(V)
+  UDVt = U %*% D %*% t(V) #consider using tcrossprod to make faster
+  YtU = as.matrix(sweep(V, 2, svdmod$d[1:k], "*"))
   sigsq_hat_diag = colSums((Y-UDVt)^2) / n
-  tausq_est = mean( (colSums(UDVt^2) / n) / (k * sigsq_hat_diag))
+  tausq_est = mean( (colSums((t(YtU))^2) / n) / (k * sigsq_hat_diag))
   
   ##### Obtain the hyperparameters #####
   
-  YtU = as.matrix(sweep(V, 2, svdmod$d[1:k], "*"))
+  #YtU = as.matrix(sweep(V, 2, svdmod$d[1:k], "*"))
   G0 = (sqrt(n) / (n + (1/tausq_est))) * YtU
-  G = G0 %*% t(G0)
+  #G = G0 %*% t(G0)
+  G = Matrix::tcrossprod(G0)
   
   # CCMatrix = cov_correct_matrix(sigsq_hat_diag, G)
   

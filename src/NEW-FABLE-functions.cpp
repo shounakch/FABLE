@@ -4,7 +4,7 @@
 
 // [[Rcpp::depends(RcppArmadillo)]]
 ////[[Rcpp::plugins("cpp11")]]
-// [[Rcpp::plugins(openmp)]]
+//// [[Rcpp::plugins(openmp)]]
 
 using namespace arma;
 
@@ -360,30 +360,30 @@ Rcpp::List FABLEHyperParameters(arma::mat Y,
   arma::mat UDVt(n, p, fill::zeros);
   
   UDVt = U_K * D_K * V_K.t();
+  arma::mat YtU(p, k, fill::zeros);
+  YtU = V_K;
+  YtU.each_row() %= svalsY.subvec(0, k-1).t();
   
   arma::vec sigsq_hat_diag(p, fill::zeros);
   sigsq_hat_diag = (sum(square(Y - UDVt), 0)).t() / n; //problematic statement
   
   double tausq_est = 1.0;
   
-  tausq_est = (mean(sum(square(UDVt), 0).t() / sigsq_hat_diag)) / (n * k);
+  tausq_est = (mean(sum(square(YtU.t()), 0).t() / sigsq_hat_diag)) / (n * k);
   
   // Obtain the hyperparameters
-  
-  arma::mat YtU(p, k, fill::zeros);
-  YtU = V_K;
-  YtU.each_row() %= svalsY.subvec(0, k-1).t();
   
   arma::mat G0(p, k, fill::zeros);
   arma::mat G(p, p, fill::zeros);
   
-  G0 = (sqrt(n) / (n + (1/tausq_est))) * YtU;
+  G0 = YtU / sqrt(n);
   G = G0 * G0.t();
   
   return Rcpp::List::create(Rcpp::Named("SigmaSqEstimate") = sigsq_hat_diag,
                             Rcpp::Named("G") = G,
                             Rcpp::Named("EstimatedRank") = k,
-                            Rcpp::Named("G0") = G0);
+                            Rcpp::Named("G0") = G0,
+                            Rcpp::Named("tauSqEstimate") = tausq_est);
   
 }
 
@@ -451,19 +451,19 @@ arma::mat CPPFABLEPostMean(arma::mat Y,
   arma::mat UDVt(n, p, fill::zeros);
   
   UDVt = U_K * D_K * V_K.t();
-  
-  arma::vec sigsq_hat_diag(p, fill::zeros);
-  sigsq_hat_diag = (sum(square(Y - UDVt), 0)).t() / n; //problematic statement
-  
-  double tausq_est = 1.0;
-  
-  tausq_est = (mean(sum(square(UDVt), 0).t() / sigsq_hat_diag)) / (n * k);
-  
-  // Obtain the hyperparameters
-  
   arma::mat YtU(p, k, fill::zeros);
   YtU = V_K;
   YtU.each_row() %= svalsY.subvec(0, k-1).t();
+  
+  arma::vec sigsq_hat_diag(p, fill::zeros);
+  sigsq_hat_diag = (sum(square(Y - UDVt), 0)).t() / n; 
+  
+  double tausq_est = 1.0;
+  
+  //tausq_est = (mean(sum(square(UDVt), 0).t() / sigsq_hat_diag)) / (n * k);
+  tausq_est = (mean(sum(square(YtU.t()), 0).t() / sigsq_hat_diag)) / (n * k);
+  
+  // Obtain the hyperparameters
   
   arma::mat G0(p, k, fill::zeros);
   arma::mat G(p, p, fill::zeros);
@@ -532,30 +532,24 @@ Rcpp::List CPPFABLESampler(arma::mat Y,
   arma::mat UDVt(n, p, fill::zeros);
   
   UDVt = U_K * D_K * V_K.t();
+  arma::mat YtU(p, k, fill::zeros);
+  YtU = V_K;
+  YtU.each_row() %= svalsY.subvec(0, k-1).t();
   
   arma::vec sigsq_hat_diag(p, fill::zeros);
   sigsq_hat_diag = (sum(square(Y - UDVt), 0)).t() / n; //problematic statement
   
   double tausq_est = 1.0;
   
-  tausq_est = (mean(sum(square(UDVt), 0).t() / sigsq_hat_diag)) / (n * k);
+  // tausq_est = (mean(sum(square(UDVt), 0).t() / sigsq_hat_diag)) / (n * k);
+  tausq_est = (mean(sum(square(YtU.t()), 0).t() / sigsq_hat_diag)) / (n * k);
   
   // Obtain the hyperparameters
   
-  arma::mat YtU(p, k, fill::zeros);
-  YtU = V_K;
-  YtU.each_row() %= svalsY.subvec(0, k-1).t();
-  
   arma::mat G0(p, k, fill::zeros);
-  arma::mat G(p, p, fill::zeros);
+  arma::mat GCovCorrect(p, p, fill::zeros);
   
   G0 = (sqrt(n) / (n + (1/tausq_est))) * YtU;
-  G = G0 * G0.t();
-  
-  arma::vec covCorrectEntries = CPPcov_correct_matrix(sigsq_hat_diag, G);
-  
-  //double varInflation = covCorrectEntries.max();
-  // double varInflation = median(covCorrectEntries);
   
   double gamma_n = gamma0 + n;    // \gamma_n = \gamma_0 + n
   
@@ -568,7 +562,7 @@ Rcpp::List CPPFABLESampler(arma::mat Y,
   arma::mat SigmaSampleStor(MC, p, fill::ones);
   arma::mat LambdaSampleStor(MC, k*p, fill::zeros); //Return column-vectorized version of samples of Lambda
   
-  double a_n = 1 / sqrt(n + (1 / tausq_est));
+  double a_n = sqrt(varInflation) / sqrt(n + (1 / tausq_est));
   
   for(int m = 0; m < MC; ++m) {
     
@@ -583,7 +577,11 @@ Rcpp::List CPPFABLESampler(arma::mat Y,
     
     arma::mat ZSample(p, k, fill::randn);
     arma::mat LambdaSample(p, k, fill::zeros);
+<<<<<<< HEAD
     ZSample.each_col() %= sqrt(sigmaSqSample * varInflation); 
+=======
+    ZSample.each_col() %= sqrt(sigmaSqSample); 
+>>>>>>> 5e4ad2b9294ab749fa25d28fae94e29b4eab9e15
     
     LambdaSample = G0 + (a_n * ZSample);
     LambdaSampleStor.row(m) = vectorise(LambdaSample.t()).t();
@@ -592,11 +590,12 @@ Rcpp::List CPPFABLESampler(arma::mat Y,
   
   return Rcpp::List::create(Rcpp::Named("LambdaSamples") = LambdaSampleStor,
                             Rcpp::Named("SigmaSqSamples") = SigmaSampleStor,
-                            Rcpp::Named("G") = G,
-                            // Rcpp::Named("SigmaSqEstimate") = gamma_n_deltasq / (gamma_n - 2),
-                            Rcpp::Named("SigmaSqEstimate") = sigsq_hat_diag,
+                            Rcpp::Named("SigmaSqEstimatePostMean") = gamma_n_deltasq / (gamma_n - 2),
+                            Rcpp::Named("SigmaSqEstimatePlugIn") = sigsq_hat_diag,
                             Rcpp::Named("EstimatedRank") = k,
-                            Rcpp::Named("VarianceInflation") = varInflation);
+                            Rcpp::Named("VarianceInflation") = varInflation,
+                            Rcpp::Named("tauSqEstimate") = tausq_est,
+                            Rcpp::Named("G") = G0 * G0.t());
   
 }
 
@@ -694,7 +693,7 @@ Rcpp::List CCFABLEPostProcessingSubmatrix(Rcpp::List FABLEOutput,
   
   arma::mat LambdaSamples = FABLEOutput["LambdaSamples"];
   arma::mat SigmaSqSamples = FABLEOutput["SigmaSqSamples"];
-  arma::mat G = FABLEOutput["G"];
+  //arma::mat G = FABLEOutput["G"];
   
   int nMC = SigmaSqSamples.n_rows;
   int p = SigmaSqSamples.n_cols;
