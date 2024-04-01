@@ -577,11 +577,8 @@ Rcpp::List CPPFABLESampler(arma::mat Y,
     
     arma::mat ZSample(p, k, fill::randn);
     arma::mat LambdaSample(p, k, fill::zeros);
-<<<<<<< HEAD
-    ZSample.each_col() %= sqrt(sigmaSqSample * varInflation); 
-=======
+
     ZSample.each_col() %= sqrt(sigmaSqSample); 
->>>>>>> 5e4ad2b9294ab749fa25d28fae94e29b4eab9e15
     
     LambdaSample = G0 + (a_n * ZSample);
     LambdaSampleStor.row(m) = vectorise(LambdaSample.t()).t();
