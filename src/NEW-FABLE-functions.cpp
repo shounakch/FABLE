@@ -36,6 +36,7 @@ arma::mat SymmetrizeMatrix(arma::mat A) {
   
 }
 
+//Base SVD in R seems very optimized and has same speed as "dc" + "econ".
 // [[Rcpp::export]]
 Rcpp::List CPPsvd(arma::mat X,
                   int flag){
@@ -423,7 +424,8 @@ arma::mat CPPFABLEPostMean(arma::mat Y,
                            arma::mat U_Y,
                            arma::mat V_Y,
                            arma::vec svalsY,
-                           int kMax) {
+                           int kMax,
+                           double varInflation) {
   
   int n = Y.n_rows;
   int p = Y.n_cols;
@@ -483,7 +485,10 @@ arma::mat CPPFABLEPostMean(arma::mat Y,
   
   arma::mat SigmaEstimate(p, p, fill::zeros);
   arma::mat CovPostMean(p, p, fill::zeros);
+
+  // double sigmaCoef = 1.0 + (k * (varInflation*varInflation) / (n + tausq_est));
   SigmaEstimate = diagmat(gamma_n_deltasq / (gamma_n - 2));
+  // SigmaEstimate = sigmaCoef * SigmaEstimate;
   
   CovPostMean = G + SigmaEstimate;
   
@@ -574,11 +579,11 @@ Rcpp::List CPPFABLESampler(arma::mat Y,
     
     SigmaSampleStor.row(m) = sigmaSqSample.t();
     
-    // Sample \Lambda
+    // Sample \Lambda; varInflation = \rho^2 in draft
     
     arma::mat ZSample(p, k, fill::randn);
     arma::mat LambdaSample(p, k, fill::zeros);
-    ZSample.each_col() %= sqrt(sigmaSqSample * varInflation);
+    ZSample.each_col() %= sqrt(sigmaSqSample * varInflation); 
     
     LambdaSample = G0 + (a_n * ZSample);
     LambdaSampleStor.row(m) = vectorise(LambdaSample.t()).t();

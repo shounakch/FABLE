@@ -84,15 +84,16 @@ RankEstimator <- function(Ymat, svdmod, kMax) {
     #t2 = proc.time()
     
     UDVt = U_K %*% D_K %*% t(V_K)
-    sigsq_hat_diag = colSums((Ymat-UDVt)^2) / nwhole
-    tausq_est = mean( (colSums(UDVt^2) / nwhole) / (kInd * sigsq_hat_diag))
+    sigsq_hat_diag = colSums((Ymat-UDVt)^2) / (nwhole - kInd)
+    #tausq_est = mean( (colSums(UDVt^2) / nwhole) / (kInd * sigsq_hat_diag))
     
     #t3 = proc.time()
     
     # Estimate factor loadings \Lambda
     
     YtU = as.matrix(sweep(V_K, 2, svalsY[1:kInd], "*"))
-    LambdaEst = (sqrt(nwhole) / (nwhole + tausq_est)) * (YtU)
+    #LambdaEst = (sqrt(nwhole) / (nwhole + tausq_est)) * (YtU)
+    LambdaEst = YtU / sqrt(nwhole)
     
     #t4 = proc.time()
     
@@ -297,7 +298,7 @@ CCFABLE_DirectSampler <- function(Y, gamma0 = 1, delta0sq = 1, MC = 1000) {
 }
 
 #function to provide pseudo-posterior mean without carrying out any sampling.
-FABLEPostmean <- function(Y, gamma0 = 1, delta0sq = 1, kMax) {
+FABLEPostmean <- function(Y, gamma0 = 1, delta0sq = 1) {
   
   n = dim(Y)[1]
   p = dim(Y)[2]
@@ -307,6 +308,8 @@ FABLEPostmean <- function(Y, gamma0 = 1, delta0sq = 1, kMax) {
   # t1 = proc.time()
   
   ####### CHOOSE k ##########
+  
+  kMax = min(which(cumsum(svdmod$d) / sum(svdmod$d) >= 0.75))
   
   k = RankEstimator(Y, svdmod, kMax)
   
