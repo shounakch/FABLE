@@ -9,7 +9,7 @@
 \packageDescription{FABLE}
 }
 \details{
-%The DESCRIPTION file:
+The DESCRIPTION file:
 \packageDESCRIPTION{FABLE}
 \packageIndices{FABLE}
 This package implements the Factor Analysis with BLEssing of dimension (FABLE) approach. The PseudoPosteriorSampler function provides pseudo-posterior samples from the coverage-corrected FABLE approach, while the PseudoPosteriorMean provides the pseudo-posterior mean.
