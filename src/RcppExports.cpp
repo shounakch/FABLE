@@ -11,55 +11,210 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// rcpparma_hello_world
-arma::mat rcpparma_hello_world();
-RcppExport SEXP _FABLE_rcpparma_hello_world() {
+// rGamma
+arma::vec rGamma(int n, double a, double b);
+RcppExport SEXP _FABLE_rGamma(SEXP nSEXP, SEXP aSEXP, SEXP bSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(rcpparma_hello_world());
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type a(aSEXP);
+    Rcpp::traits::input_parameter< double >::type b(bSEXP);
+    rcpp_result_gen = Rcpp::wrap(rGamma(n, a, b));
     return rcpp_result_gen;
 END_RCPP
 }
-// rcpparma_outerproduct
-arma::mat rcpparma_outerproduct(const arma::colvec& x);
-RcppExport SEXP _FABLE_rcpparma_outerproduct(SEXP xSEXP) {
+// SymmetrizeMatrix
+arma::mat SymmetrizeMatrix(arma::mat A);
+RcppExport SEXP _FABLE_SymmetrizeMatrix(SEXP ASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpparma_outerproduct(x));
+    Rcpp::traits::input_parameter< arma::mat >::type A(ASEXP);
+    rcpp_result_gen = Rcpp::wrap(SymmetrizeMatrix(A));
     return rcpp_result_gen;
 END_RCPP
 }
-// rcpparma_innerproduct
-double rcpparma_innerproduct(const arma::colvec& x);
-RcppExport SEXP _FABLE_rcpparma_innerproduct(SEXP xSEXP) {
+// CPPsvd
+Rcpp::List CPPsvd(arma::mat X, int flag);
+RcppExport SEXP _FABLE_CPPsvd(SEXP XSEXP, SEXP flagSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpparma_innerproduct(x));
+    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< int >::type flag(flagSEXP);
+    rcpp_result_gen = Rcpp::wrap(CPPsvd(X, flag));
     return rcpp_result_gen;
 END_RCPP
 }
-// rcpparma_bothproducts
-Rcpp::List rcpparma_bothproducts(const arma::colvec& x);
-RcppExport SEXP _FABLE_rcpparma_bothproducts(SEXP xSEXP) {
+// LogLikelihoodEval
+double LogLikelihoodEval(arma::mat Y, arma::mat M, arma::mat Lambda, arma::vec SigmaSq);
+RcppExport SEXP _FABLE_LogLikelihoodEval(SEXP YSEXP, SEXP MSEXP, SEXP LambdaSEXP, SEXP SigmaSqSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpparma_bothproducts(x));
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type M(MSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Lambda(LambdaSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type SigmaSq(SigmaSqSEXP);
+    rcpp_result_gen = Rcpp::wrap(LogLikelihoodEval(Y, M, Lambda, SigmaSq));
+    return rcpp_result_gen;
+END_RCPP
+}
+// CriterionFunction
+double CriterionFunction(int kInd, arma::mat Y, arma::mat U_Y, arma::mat V_Y, arma::vec svalsY);
+RcppExport SEXP _FABLE_CriterionFunction(SEXP kIndSEXP, SEXP YSEXP, SEXP U_YSEXP, SEXP V_YSEXP, SEXP svalsYSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type kInd(kIndSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type U_Y(U_YSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type V_Y(V_YSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type svalsY(svalsYSEXP);
+    rcpp_result_gen = Rcpp::wrap(CriterionFunction(kInd, Y, U_Y, V_Y, svalsY));
+    return rcpp_result_gen;
+END_RCPP
+}
+// BisectionRecursion
+arma::vec BisectionRecursion(int lower, int upper, arma::mat Y, arma::mat U_Y, arma::mat V_Y, arma::vec svalsY);
+RcppExport SEXP _FABLE_BisectionRecursion(SEXP lowerSEXP, SEXP upperSEXP, SEXP YSEXP, SEXP U_YSEXP, SEXP V_YSEXP, SEXP svalsYSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< int >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type U_Y(U_YSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type V_Y(V_YSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type svalsY(svalsYSEXP);
+    rcpp_result_gen = Rcpp::wrap(BisectionRecursion(lower, upper, Y, U_Y, V_Y, svalsY));
+    return rcpp_result_gen;
+END_RCPP
+}
+// RankEstimator
+int RankEstimator(arma::mat Y, arma::mat U_Y, arma::mat V_Y, arma::vec svalsY, int kMax);
+RcppExport SEXP _FABLE_RankEstimator(SEXP YSEXP, SEXP U_YSEXP, SEXP V_YSEXP, SEXP svalsYSEXP, SEXP kMaxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type U_Y(U_YSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type V_Y(V_YSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type svalsY(svalsYSEXP);
+    Rcpp::traits::input_parameter< int >::type kMax(kMaxSEXP);
+    rcpp_result_gen = Rcpp::wrap(RankEstimator(Y, U_Y, V_Y, svalsY, kMax));
+    return rcpp_result_gen;
+END_RCPP
+}
+// FABLEHyperParameters
+Rcpp::List FABLEHyperParameters(arma::mat Y, arma::mat U_Y, arma::mat V_Y, arma::vec svalsY, int kEst, double gamma0, double delta0sq);
+RcppExport SEXP _FABLE_FABLEHyperParameters(SEXP YSEXP, SEXP U_YSEXP, SEXP V_YSEXP, SEXP svalsYSEXP, SEXP kEstSEXP, SEXP gamma0SEXP, SEXP delta0sqSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type U_Y(U_YSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type V_Y(V_YSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type svalsY(svalsYSEXP);
+    Rcpp::traits::input_parameter< int >::type kEst(kEstSEXP);
+    Rcpp::traits::input_parameter< double >::type gamma0(gamma0SEXP);
+    Rcpp::traits::input_parameter< double >::type delta0sq(delta0sqSEXP);
+    rcpp_result_gen = Rcpp::wrap(FABLEHyperParameters(Y, U_Y, V_Y, svalsY, kEst, gamma0, delta0sq));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cov_correct_matrix
+arma::mat cov_correct_matrix(arma::vec sigsq_hat, arma::mat llprime_hat);
+RcppExport SEXP _FABLE_cov_correct_matrix(SEXP sigsq_hatSEXP, SEXP llprime_hatSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type sigsq_hat(sigsq_hatSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type llprime_hat(llprime_hatSEXP);
+    rcpp_result_gen = Rcpp::wrap(cov_correct_matrix(sigsq_hat, llprime_hat));
+    return rcpp_result_gen;
+END_RCPP
+}
+// FABLEPostMean
+arma::mat FABLEPostMean(arma::mat Y, double gamma0, double delta0sq, arma::mat U_Y, arma::mat V_Y, arma::vec svalsY, int kMax);
+RcppExport SEXP _FABLE_FABLEPostMean(SEXP YSEXP, SEXP gamma0SEXP, SEXP delta0sqSEXP, SEXP U_YSEXP, SEXP V_YSEXP, SEXP svalsYSEXP, SEXP kMaxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< double >::type gamma0(gamma0SEXP);
+    Rcpp::traits::input_parameter< double >::type delta0sq(delta0sqSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type U_Y(U_YSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type V_Y(V_YSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type svalsY(svalsYSEXP);
+    Rcpp::traits::input_parameter< int >::type kMax(kMaxSEXP);
+    rcpp_result_gen = Rcpp::wrap(FABLEPostMean(Y, gamma0, delta0sq, U_Y, V_Y, svalsY, kMax));
+    return rcpp_result_gen;
+END_RCPP
+}
+// FABLESampler
+Rcpp::List FABLESampler(arma::mat Y, double gamma0, double delta0sq, int MC, arma::mat U_Y, arma::mat V_Y, arma::vec svalsY, int kEst, double tausq_est, arma::vec gammaDeltasq, arma::mat G0, double varInflation);
+RcppExport SEXP _FABLE_FABLESampler(SEXP YSEXP, SEXP gamma0SEXP, SEXP delta0sqSEXP, SEXP MCSEXP, SEXP U_YSEXP, SEXP V_YSEXP, SEXP svalsYSEXP, SEXP kEstSEXP, SEXP tausq_estSEXP, SEXP gammaDeltasqSEXP, SEXP G0SEXP, SEXP varInflationSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< double >::type gamma0(gamma0SEXP);
+    Rcpp::traits::input_parameter< double >::type delta0sq(delta0sqSEXP);
+    Rcpp::traits::input_parameter< int >::type MC(MCSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type U_Y(U_YSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type V_Y(V_YSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type svalsY(svalsYSEXP);
+    Rcpp::traits::input_parameter< int >::type kEst(kEstSEXP);
+    Rcpp::traits::input_parameter< double >::type tausq_est(tausq_estSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type gammaDeltasq(gammaDeltasqSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type G0(G0SEXP);
+    Rcpp::traits::input_parameter< double >::type varInflation(varInflationSEXP);
+    rcpp_result_gen = Rcpp::wrap(FABLESampler(Y, gamma0, delta0sq, MC, U_Y, V_Y, svalsY, kEst, tausq_est, gammaDeltasq, G0, varInflation));
+    return rcpp_result_gen;
+END_RCPP
+}
+// CCFABLEPostProcessing
+Rcpp::List CCFABLEPostProcessing(Rcpp::List FABLEOutput, double alpha);
+RcppExport SEXP _FABLE_CCFABLEPostProcessing(SEXP FABLEOutputSEXP, SEXP alphaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type FABLEOutput(FABLEOutputSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    rcpp_result_gen = Rcpp::wrap(CCFABLEPostProcessing(FABLEOutput, alpha));
+    return rcpp_result_gen;
+END_RCPP
+}
+// CCFABLEPostProcessingSubmatrix
+Rcpp::List CCFABLEPostProcessingSubmatrix(Rcpp::List FABLEOutput, double alpha, arma::uvec SelectedIndices);
+RcppExport SEXP _FABLE_CCFABLEPostProcessingSubmatrix(SEXP FABLEOutputSEXP, SEXP alphaSEXP, SEXP SelectedIndicesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type FABLEOutput(FABLEOutputSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< arma::uvec >::type SelectedIndices(SelectedIndicesSEXP);
+    rcpp_result_gen = Rcpp::wrap(CCFABLEPostProcessingSubmatrix(FABLEOutput, alpha, SelectedIndices));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_FABLE_rcpparma_hello_world", (DL_FUNC) &_FABLE_rcpparma_hello_world, 0},
-    {"_FABLE_rcpparma_outerproduct", (DL_FUNC) &_FABLE_rcpparma_outerproduct, 1},
-    {"_FABLE_rcpparma_innerproduct", (DL_FUNC) &_FABLE_rcpparma_innerproduct, 1},
-    {"_FABLE_rcpparma_bothproducts", (DL_FUNC) &_FABLE_rcpparma_bothproducts, 1},
+    {"_FABLE_rGamma", (DL_FUNC) &_FABLE_rGamma, 3},
+    {"_FABLE_SymmetrizeMatrix", (DL_FUNC) &_FABLE_SymmetrizeMatrix, 1},
+    {"_FABLE_CPPsvd", (DL_FUNC) &_FABLE_CPPsvd, 2},
+    {"_FABLE_LogLikelihoodEval", (DL_FUNC) &_FABLE_LogLikelihoodEval, 4},
+    {"_FABLE_CriterionFunction", (DL_FUNC) &_FABLE_CriterionFunction, 5},
+    {"_FABLE_BisectionRecursion", (DL_FUNC) &_FABLE_BisectionRecursion, 6},
+    {"_FABLE_RankEstimator", (DL_FUNC) &_FABLE_RankEstimator, 5},
+    {"_FABLE_FABLEHyperParameters", (DL_FUNC) &_FABLE_FABLEHyperParameters, 7},
+    {"_FABLE_cov_correct_matrix", (DL_FUNC) &_FABLE_cov_correct_matrix, 2},
+    {"_FABLE_FABLEPostMean", (DL_FUNC) &_FABLE_FABLEPostMean, 7},
+    {"_FABLE_FABLESampler", (DL_FUNC) &_FABLE_FABLESampler, 12},
+    {"_FABLE_CCFABLEPostProcessing", (DL_FUNC) &_FABLE_CCFABLEPostProcessing, 2},
+    {"_FABLE_CCFABLEPostProcessingSubmatrix", (DL_FUNC) &_FABLE_CCFABLEPostProcessingSubmatrix, 3},
     {NULL, NULL, 0}
 };
 
