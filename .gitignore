@@ -8,6 +8,7 @@ src/*.dll
 
 extras/*
 
+!extras/replicationCodes/
 !extras/replicationCodes/*
 !extras/MGSP-functions.cpp
 !extras/automatic_RockovaGeorge.R
