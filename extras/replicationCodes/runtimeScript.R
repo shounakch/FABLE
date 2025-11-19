@@ -4,6 +4,7 @@ library(infinitefactor)
 library(cvCovEst)
 
 #n = no. of samples, p = no. of dimensions, R = no. of replicates
+#function to replicate runtime results
 runTimeResults<-function(n, p, seedValue) {
   
   set.seed(seedValue)
