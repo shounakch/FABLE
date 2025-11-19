@@ -270,6 +270,14 @@ arma::vec CPPBisectionRecursion(int lower,
   
 }
 
+//' Estimates rank of factor model via JIC
+//' @description Implements the JIC rank estimation criterion.
+//' @param Y n*p matrix of data; let r = min(n,p).
+//' @param U_Y Left singular vectors (n*r).
+//' @param V_Y Right singular vectors (p*r).
+//' @param svalsY Singular values of Y (length r).
+//' @param kMax Maximum rank to consider.
+//' @return Integer value of the estimated rank.
 // [[Rcpp::export]]
 int CPPRankEstimator(arma::mat Y, 
                      arma::mat U_Y,
@@ -419,7 +427,16 @@ arma::mat CPPcov_correct_matrix(arma::vec sigsq_hat,
   
 }
 
-//Requires input of SVD.
+//' Compute FABLE posterior mean.
+//' @description Provides the explicitly available FABLE-posterior mean without any sampling
+//' @param Y Data matrix 
+//' @param gamma0 Shape parameter for variance prior
+//' @param delta0sq Rate parameter for variance prior
+//' @param U_Y Left singular matrix
+//' @param V_Y Right singular matrix
+//' @param svalsY Singular values of Y 
+//' @param kMax Maximum of range of rank
+//' @return FABLE-posterior mean
 // [[Rcpp::export]]
 Rcpp::List CPPFABLEPostMean(arma::mat Y, 
                             double gamma0, 
@@ -501,7 +518,17 @@ Rcpp::List CPPFABLEPostMean(arma::mat Y,
   
 }
 
-//New FABLE sampling using variance inflation factor.
+//' FABLE-posterior sampling with coverage-correction.
+//' @description Provides independent FABLE-posterior samples of the covariance matrix
+//' @param Y Data matrix 
+//' @param gamma0 Shape parameter for variance prior.
+//' @param delta0sq Rate parameter for variance prior.
+//' @param MC Desired number of Monte Carlo samples.
+//' @param U_Y Left singular matrix 
+//' @param V_Y Right singular matrix
+//' @param svalsY Singular values of Y 
+//' @param kEst Maximum of range of rank
+//' @param varInflation Coverage-correction coefficient
 // [[Rcpp::export]]
 Rcpp::List CPPFABLESampler(arma::mat Y, 
                            double gamma0, 

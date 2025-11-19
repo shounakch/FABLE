@@ -41,6 +41,14 @@ CPPBisectionRecursion <- function(lower, upper, Y, U_Y, V_Y, svalsY) {
     .Call(`_FABLE_CPPBisectionRecursion`, lower, upper, Y, U_Y, V_Y, svalsY)
 }
 
+#' Estimates rank of factor model via JIC
+#' @description Implements the JIC rank estimation criterion.
+#' @param Y n*p matrix of data; let r = min(n,p).
+#' @param U_Y Left singular vectors (n*r).
+#' @param V_Y Right singular vectors (p*r).
+#' @param svalsY Singular values of Y (length r).
+#' @param kMax Maximum rank to consider.
+#' @return Integer value of the estimated rank.
 CPPRankEstimator <- function(Y, U_Y, V_Y, svalsY, kMax) {
     .Call(`_FABLE_CPPRankEstimator`, Y, U_Y, V_Y, svalsY, kMax)
 }
@@ -53,10 +61,31 @@ CPPcov_correct_matrix <- function(sigsq_hat, llprime_hat) {
     .Call(`_FABLE_CPPcov_correct_matrix`, sigsq_hat, llprime_hat)
 }
 
+#' Compute FABLE posterior mean.
+#' @description Provides the explicitly available FABLE-posterior mean without any sampling
+#' @param Y Data matrix 
+#' @param gamma0 Shape parameter for variance prior
+#' @param delta0sq Rate parameter for variance prior
+#' @param U_Y Left singular matrix
+#' @param V_Y Right singular matrix
+#' @param svalsY Singular values of Y 
+#' @param kMax Maximum of range of rank
+#' @return FABLE-posterior mean
 CPPFABLEPostMean <- function(Y, gamma0, delta0sq, U_Y, V_Y, svalsY, kMax) {
     .Call(`_FABLE_CPPFABLEPostMean`, Y, gamma0, delta0sq, U_Y, V_Y, svalsY, kMax)
 }
 
+#' FABLE-posterior sampling with coverage-correction.
+#' @description Provides independent FABLE-posterior samples of the covariance matrix
+#' @param Y Data matrix 
+#' @param gamma0 Shape parameter for variance prior.
+#' @param delta0sq Rate parameter for variance prior.
+#' @param MC Desired number of Monte Carlo samples.
+#' @param U_Y Left singular matrix 
+#' @param V_Y Right singular matrix
+#' @param svalsY Singular values of Y 
+#' @param kEst Maximum of range of rank
+#' @param varInflation Coverage-correction coefficient
 CPPFABLESampler <- function(Y, gamma0, delta0sq, MC, U_Y, V_Y, svalsY, kEst, varInflation) {
     .Call(`_FABLE_CPPFABLESampler`, Y, gamma0, delta0sq, MC, U_Y, V_Y, svalsY, kEst, varInflation)
 }
