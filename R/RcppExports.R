@@ -17,3 +17,59 @@ rcpparma_bothproducts <- function(x) {
     .Call(`_FABLE_rcpparma_bothproducts`, x)
 }
 
+rGamma <- function(n, a, b) {
+    .Call(`_FABLE_rGamma`, n, a, b)
+}
+
+SymmetrizeMatrix <- function(A) {
+    .Call(`_FABLE_SymmetrizeMatrix`, A)
+}
+
+CPPsvd <- function(X, flag) {
+    .Call(`_FABLE_CPPsvd`, X, flag)
+}
+
+CPPLogLikelihoodEval <- function(Y, M, Lambda, SigmaSq) {
+    .Call(`_FABLE_CPPLogLikelihoodEval`, Y, M, Lambda, SigmaSq)
+}
+
+CPPCriterionFunction <- function(kInd, Y, U_Y, V_Y, svalsY) {
+    .Call(`_FABLE_CPPCriterionFunction`, kInd, Y, U_Y, V_Y, svalsY)
+}
+
+CPPBisectionRecursion <- function(lower, upper, Y, U_Y, V_Y, svalsY) {
+    .Call(`_FABLE_CPPBisectionRecursion`, lower, upper, Y, U_Y, V_Y, svalsY)
+}
+
+CPPRankEstimator <- function(Y, U_Y, V_Y, svalsY, kMax) {
+    .Call(`_FABLE_CPPRankEstimator`, Y, U_Y, V_Y, svalsY, kMax)
+}
+
+FABLEHyperParameters <- function(Y, U_Y, V_Y, svalsY, kEst) {
+    .Call(`_FABLE_FABLEHyperParameters`, Y, U_Y, V_Y, svalsY, kEst)
+}
+
+CPPcov_correct_matrix <- function(sigsq_hat, llprime_hat) {
+    .Call(`_FABLE_CPPcov_correct_matrix`, sigsq_hat, llprime_hat)
+}
+
+CPPFABLEPostMean <- function(Y, gamma0, delta0sq, U_Y, V_Y, svalsY, kMax) {
+    .Call(`_FABLE_CPPFABLEPostMean`, Y, gamma0, delta0sq, U_Y, V_Y, svalsY, kMax)
+}
+
+CPPFABLESampler <- function(Y, gamma0, delta0sq, MC, U_Y, V_Y, svalsY, kEst, varInflation) {
+    .Call(`_FABLE_CPPFABLESampler`, Y, gamma0, delta0sq, MC, U_Y, V_Y, svalsY, kEst, varInflation)
+}
+
+CPPCCFABLEPostProcessing <- function(FABLEOutput, alpha) {
+    .Call(`_FABLE_CPPCCFABLEPostProcessing`, FABLEOutput, alpha)
+}
+
+CCFABLEPostProcessingSubmatrix <- function(FABLEOutput, alpha, SelectedIndices) {
+    .Call(`_FABLE_CCFABLEPostProcessingSubmatrix`, FABLEOutput, alpha, SelectedIndices)
+}
+
+CCFABLEPostProcessingSubmatrix_Optimized <- function(FABLEOutput, alpha, SelectedIndices) {
+    .Call(`_FABLE_CCFABLEPostProcessingSubmatrix_Optimized`, FABLEOutput, alpha, SelectedIndices)
+}
+
