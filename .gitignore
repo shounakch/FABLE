@@ -6,4 +6,9 @@ src/*.o
 src/*.so
 src/*.dll
 
-extras
+extras/*
+
+!extras/replicationCodes/*
+!extras/MGSP-functions.cpp
+!extras/automatic_RockovaGeorge.R
+!extras/AutomaticSparsity.R
