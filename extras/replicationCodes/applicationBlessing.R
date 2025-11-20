@@ -8,7 +8,7 @@ library(infinitefactor)
 
 ## Specify the rawData ##
 
-source("extras/GeneDataApplication/cleanData.R")
+source("extras/cleanData.R")
 source("extras/AutomaticSparsity.R")
 source("R/FABLE_code.R")
 

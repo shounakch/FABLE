@@ -6,8 +6,8 @@ pi0 = 0.5
 alpha = 0.05
 lambdasd = 0.5
 
-dir.name = "." #set directory name here
-dir.create(dir.name)
+dir.name = NA #set directory to save
+if(!is.na(dir.name)) {dir.create(dir.name)}
 
 set.seed(1) #set the seed here
 
@@ -87,9 +87,13 @@ for(r in 1:R) {
   
   ## Save information
   
-  write.csv(covStor[r,], file = paste0(dir.name, "/", "coverage_rep=", r,  "_n=", n, "_p=", p, "_lambdasd=", lambdasd, "_k=", k, "_pi0=", pi0, ".csv"))
-  write.csv(widthStor[r], file = paste0(dir.name, "/", "width_rep=", r,  "_n=", n, "_p=", p, "_lambdasd=", lambdasd, "_k=", k, "_pi0=", pi0, ".csv"))
-  write.csv(mean(covStor[r,]), file = paste0(dir.name, "/", "avg_coverage_rep=", r,  "_n=", n, "_p=", p, "_lambdasd=", lambdasd, "_k=", k, "_pi0=", pi0, ".csv"))
+  if(!is.na(dir.name)) {
+    
+    write.csv(covStor[r,], file = paste0(dir.name, "/", "coverage_rep=", r,  "_n=", n, "_p=", p, "_lambdasd=", lambdasd, "_k=", k, "_pi0=", pi0, ".csv"))
+    write.csv(widthStor[r], file = paste0(dir.name, "/", "width_rep=", r,  "_n=", n, "_p=", p, "_lambdasd=", lambdasd, "_k=", k, "_pi0=", pi0, ".csv"))
+    write.csv(mean(covStor[r,]), file = paste0(dir.name, "/", "avg_coverage_rep=", r,  "_n=", n, "_p=", p, "_lambdasd=", lambdasd, "_k=", k, "_pi0=", pi0, ".csv"))
+    
+  }
   
 }
 

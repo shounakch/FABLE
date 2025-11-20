@@ -2,8 +2,8 @@
 #'
 #' FABLE provides exact Monte Carlo samples of the covariance matrix in Bayesian factor analysis.
 #' This package has functions for obtaining posterior mean and posterior samples of the covariance matrix.
-#' The posterior mean function is \code{\link{CPPFABLEPostMean}}.
-#' The posterior sampler function is \code{\link{CPPFABLESampler}}.
+#' The posterior mean function is \code{\link{FABLEPosteriorMean}}.
+#' The posterior sampler function is \code{\link{FABLEPosteriorSampler}}.
 #'
 #' @docType package
 #' @name FABLE

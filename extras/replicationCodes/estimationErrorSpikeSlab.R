@@ -1,6 +1,7 @@
 ##### Install FABLE package first #####
 
-Rcpp::sourceCpp("src/updated-FABLE-functions.cpp") #replace by library(FABLE)
+#Rcpp::sourceCpp("src/updated-FABLE-functions.cpp") #replace by library(FABLE)
+library(FABLE)
 source("extras/AutomaticSparsity.R")
 library(cvCovEst)
 
@@ -9,6 +10,8 @@ library(cvCovEst)
 #### n = 500, 1000; p = 1000, 5000; 
 #### k = 10; R = 50; pi0 = 0.5, 0.85; lambdasd = 0.5
 #### save.dir is the directory under which result should be saved
+
+#### Function is executed at the end ####
 
 provideEstimationErrorsCase1 <- function(n, 
                                          p, 

@@ -1,3 +1,14 @@
+#' FABLE-posterior sampler function
+#'
+#' Description: Returns samples of the covariance from the FABLE-posterior.
+#'
+#' @param Y Data matrix
+#' @param gamma0 Variance prior shape hyperparameter
+#' @param delta0sq Variance prior rate hyperparameter
+#' @param maxProp Upper bound on cumulative singular value proportion;
+#' controls the range of the search space for the rank.
+#' @param MC Desired number of Monte Carlo samples
+#' @return List containing samples and other objects.
 FABLEPosteriorSampler <- function(Y,
                                   gamma0 = 1,
                                   delta0sq = 1,
@@ -56,6 +67,16 @@ FABLEPosteriorSampler <- function(Y,
   
 }
 
+#' FABLE-posterior mean function
+#'
+#' Description: Returns FABLE-posterior mean without sampling.
+#'
+#' @param Y Data matrix
+#' @param gamma0 Variance prior shape hyperparameter
+#' @param delta0sq Variance prior rate hyperparameter
+#' @param maxProp Upper bound on cumulative singular value proportion;
+#' controls the range of the search space for the rank.
+#' @return List containing the estimate and other objects.
 FABLEPosteriorMean <- function(Y,
                                gamma0 = 1,
                                delta0sq = 1,

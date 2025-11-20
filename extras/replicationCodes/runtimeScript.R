@@ -1,5 +1,6 @@
 source("extras/AutomaticSparsity.R")
-Rcpp::sourceCpp("src/updated-FABLE-functions.cpp")
+#Rcpp::sourceCpp("src/updated-FABLE-functions.cpp")
+library(FABLE)
 library(infinitefactor)
 library(cvCovEst)
 
