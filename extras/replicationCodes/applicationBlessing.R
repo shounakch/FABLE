@@ -42,7 +42,6 @@ N = nrow(Y)
 p = ncol(Y)
 
 ## Investigate covariance of top nVars variables by M3Drop/gold standard network/variance.
-
 ## First rank the variances of "important" variables.
 
 allColVars = apply(Y, 2, var)
