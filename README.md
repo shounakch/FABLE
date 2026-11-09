@@ -39,3 +39,6 @@ Y = (M %*% t(Lambda)) + E
 FABLEPostMean = FABLEPosteriorMean(Y, gamma0 = 1, delta0sq = 1, maxProp = 0.95)
 FABLESamples = FABLEPosteriorSampler(Y, gamma0 = 1, delta0sq = 1, maxProp = 0.95, MC = 1000)
 ```
+## Replicate Results
+
+All scripts available in https://github.com/shounakch/FABLE/tree/main/extras/replicationCodes .
